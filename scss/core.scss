@@ -1,0 +1,68 @@
+// 1. Include functions first (so you can manipulate colors, SVGs, calc, etc)
+@import "../node_modules/bootstrap/scss/functions";
+
+// 2. Include any default variable overrides here
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300&display=swap');
+
+$primary: #ff3d13;
+$secondary: #bef5fc;
+:root{
+	--primary-dark: #{shade-color($primary,50%)};
+	--primary-kinda-dark: #{shade-color($primary,30%)};
+	--secondary-dark: #{shade-color($secondary,70%)};
+
+	--border-radius: 0.2em;
+	--padding: 0.2em;
+}
+
+// 3. Include remainder of required Bootstrap stylesheets
+@import "../node_modules/bootstrap/scss/variables";
+
+// 3.5. Override non-overridable varaibles
+$font-family-sans-serif: join("Kanit", $font-family-sans-serif);
+$btn-font-family: $font-family-sans-serif;
+
+// 4. Include any default map overrides here
+
+// 5. Include remainder of required parts
+@import "../node_modules/bootstrap/scss/maps";
+@import "../node_modules/bootstrap/scss/mixins";
+@import "../node_modules/bootstrap/scss/root";
+
+@import "../node_modules/bootstrap/scss/utilities";
+@import "../node_modules/bootstrap/scss/reboot";
+@import "../node_modules/bootstrap/scss/grid";
+
+// 6. Optionally include any other parts as needed
+@import "../node_modules/bootstrap/scss/buttons";
+@import "../node_modules/bootstrap/scss/dropdown";
+@import "../node_modules/bootstrap/scss/images";
+
+// 7. Optionally include utilities API last to generate classes based on the Sass map in `_utilities.scss`
+@import "../node_modules/bootstrap/scss/utilities/api";
+
+// 8. Add additional custom code here
+
+//override
+ol, ul, dl {
+  margin-bottom: 0;
+}
+
+body{
+	color: #{$secondary};
+	background: #{$gray-900};
+}
+
+$button: "button, [type=\"button\"], [type=\"reset\"], [type=\"submit\"]";
+#{$button}{
+	background: var(--bs-primary);
+	border-width: 0;
+	border-radius: 0.3em;
+	padding: 0.2em 0.6em;
+	box-shadow: 0 0.2em var(--primary-dark);
+
+	&:hover{
+		transform: translate(0,0.2em);
+		box-shadow: unset;
+	}
+}

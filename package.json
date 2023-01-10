@@ -1,0 +1,19 @@
+{
+  "name": "discordbotinterfacejs",
+  "version": "0.0.0",
+  "description": "a tool that lets you code a discord bot, and watch it in real time!",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "KYFEX",
+  "license": "ISC",
+  "dependencies": {
+    "@arrow-js/core": "^1.0.0-alpha.5",
+    "bootstrap": "^5.2.3",
+    "discord.js": "^14.7.1",
+    "express": "^4.18.2",
+    "open": "^8.4.0",
+    "ws": "^8.11.0"
+  }
+}

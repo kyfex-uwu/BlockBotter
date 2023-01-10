@@ -1,0 +1,101 @@
+<div style="
+  display: grid;
+  grid-template-columns: 5em 10em 1fr;
+  grid-gap: 1em;
+  height: 100%;">
+  <ul id="guildContainer" style="
+        width: 5em;
+        list-style: none;
+        padding: unset;"></ul>
+  <ul id="channelContainer" style="
+        width: 10em;
+        list-style: none;
+        padding: unset;"></ul>
+  <ul id="messageContainer" style="
+        list-style: none;
+        padding: unset;
+        overflow-y: scroll;
+        height: 100%;
+        flex-direction: column-reverse;
+        display: flex;"></ul>
+</div>
+
+<style type="text/css">
+  .server-img{
+    border-radius: 50%;
+    width: 100%;
+    cursor: pointer;
+    padding: var(--padding);
+  }
+
+  .channel{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0.2em;
+    padding: var(--padding);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+
+    transition: background-color 0.1s;
+  }
+  .channel:hover{
+    background-color: var(--bs-gray-800);
+  }
+
+  .message{
+    width: 100%;
+    padding: var(--padding);
+    border-radius: var(--border-radius);
+    display: grid;
+    grid-template-columns: auto 1fr;
+  }
+
+  .pfp-img{
+    border-radius: 50%;
+    width: 3em;
+    float: left;
+    margin-right: 1em;
+  }
+
+  .channel-link{
+    background: var(--primary-dark);
+    border-radius: var(--border-radius);
+    padding: 0 var(--padding);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .channel-link::before{
+    content:"#";
+  }
+  .channel-link:hover{
+    background: var(--primary-kinda-dark);
+    color: var(--bs-link-color);
+  }
+
+  .mention{
+    background-color: var(--bs-gray-700);
+    border-radius: var(--border-radius);
+    padding: 0 var(--padding);
+    cursor: pointer;
+  }
+  .mention::before{
+    content:"@";
+  }
+  .mention:hover{
+    background: var(--secondary-dark);
+  }
+
+  .emoji{  
+    width: calc(var(--bs-body-font-size)*var(--bs-body-line-height));
+    height: calc(var(--bs-body-font-size)*var(--bs-body-line-height));
+    display: inline-block;
+    vertical-align: bottom;
+  }
+  .emoji>img{  
+    max-width: calc(var(--bs-body-font-size)*var(--bs-body-line-height));
+    max-height: calc(var(--bs-body-font-size)*var(--bs-body-line-height));
+    margin: auto;
+    display: block;
+  }
+</style>

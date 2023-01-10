@@ -1,0 +1,2 @@
+welcome to kyfex's discord bot interface!
+type "help" to see a list of commands
