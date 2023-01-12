@@ -1,4 +1,7 @@
 let internalWebsocket = new WebSocket("ws://localhost:3001");
+internalWebsocket.addEventListener('open', (event) => {
+  internalWebsocket.send("frontEnd");
+});
 
 internalWebsocket.addEventListener('message',(event)=>{
 	let response=JSON.parse(event.data);
@@ -50,6 +53,7 @@ function switchGuild(guildId){
 
 	sendAndWait("getGuildChannelsVisual",guildId)
 		.then((guildChannels)=>{
+			localChannelCache={};
 			guildChannels.forEach((channelData)=>{
 				if(currentChannel==undefined&&channelData.switchable)
 					switchChannel(channelData.id);
@@ -74,7 +78,7 @@ function switchChannel(channelId){
 	currentChannel=channelId;
 	messageContainer.textContent = "";
 
-	sendAndWait("getChannelMessagesVisual",channelId)
+	sendAndWait("getChannelMessagesVisual",{channel: channelId})
 		.then((messages)=>{
 			messages.forEach((message)=>{
 				addMessage(message,"old");
@@ -83,6 +87,24 @@ function switchChannel(channelId){
 			messageContainer.scroll({top:9999,behavior:"smooth"});
 		});
 }
+
+let loadingMessages=false;
+messageContainer.addEventListener("scroll",(scroll)=>{
+	if(messageContainer.scrollTop==0&&!loadingMessages){
+		loadingMessages=true;
+		sendAndWait("getChannelMessagesVisual",{
+			channel: currentChannel,
+			before: messageContainer.children[0].getAttribute("data-messageid")
+		}).then((messages)=>{
+			let toScroll=messageContainer.children[0];
+			messages.forEach((message)=>{
+				addMessage(message,"old");
+			});
+			messageContainer.scrollTo(0, toScroll.offsetTop-toScroll.clientHeight/2);
+			loadingMessages=false;
+		});
+	}
+});
 
 //--
 
@@ -100,11 +122,12 @@ function addServerIcon(guildData){
 function addMessage(messageData, position){
 	let toAdd = document.createElement("div");
 	toAdd.classList.add("message");
+	toAdd.setAttribute("data-messageid",messageData.id);
 
 	if(position=="old")
-		messageContainer.append(toAdd);
-	if(position=="new")
 		messageContainer.prepend(toAdd);
+	if(position=="new")
+		messageContainer.append(toAdd);
 
 	html`<img class="pfp-img" src="${messageData.pfp}">
 		<span>

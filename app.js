@@ -6,7 +6,16 @@ const { Server } = require('ws');
  
 const internalServer = new Server({ port: 3001 });
 internalServer.on('connection', (ws) => {
-  botLogic.supplyFrontEnd(ws);
+  ws.once("message",(event)=>{
+    switch(event.toString()){
+      case "frontEnd":
+        botLogic.supplyFrontEnd(ws);
+        break;
+      case "editor":
+        botLogic.supplyEditor(ws);
+        break;
+    }
+  });
 
   ws.on('close', () => console.log('Client has disconnected!'));
 });
@@ -31,6 +40,12 @@ new AbstractScene(
   "Client",
   utils.getTextFile("./scenes/pagedata/Client.html"),
   utils.getTextFile("./scenes/pagedata/Client.js")
+).register(app);
+new AbstractScene(
+  "/editor",
+  "Editor",
+  utils.getTextFile("./scenes/pagedata/Editor.html"),
+  utils.getTextFile("./scenes/pagedata/Editor.js")
 ).register(app);
 
 app.get("/login",(req,res)=>{
@@ -67,7 +82,7 @@ async function commandLineHandler(...input) {
         "restart (r): restarts the bot, running the most updated code and saving all data\n" +
         "shutdown: shuts the bot down completely, saving all data\n" +
         "sass: recompiles sass\n" + 
-        "open: opens the client";
+        "open (front OR editor): opens the client or the editor, depending on which one you specify";
     case "r":
     case "restart":
       await require('child_process').exec('cmd /c start "" cmd /c start.bat');
@@ -84,8 +99,16 @@ async function commandLineHandler(...input) {
       await require('child_process').exec('cmd /c start "" cmd /c compile_sass.bat');
       return "recompiled";
     case "open":
-      open("http://localhost:3000/");
-      return "opened in browser";
+      switch(input[1]){
+        case "front":
+          open("http://localhost:3000/");
+          return "opened in browser";
+        case "editor":
+          open("http://localhost:3000/editor");
+          return "opened in browser";
+        default:
+          return "type \"open front\" or \"open editor\"";
+      }
     default:
       return "not a command. type help to see all commands";
   }
