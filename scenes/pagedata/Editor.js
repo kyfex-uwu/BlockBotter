@@ -170,27 +170,72 @@ let eventNames=[
 ];
 eventBlock.args0[0].options=eventNames;
 
+const OBJECT_GET = {
+  init: function(){
+    this.appendValueInput("OBJECT");
+    this.appendDummyInput("PROPS").appendField("get");
+
+    this.setStyle("util_blocks");
+    this.setInputsInline(true);
+    this.propCount = 1;
+    this.updateShape_();
+    this.setOutput(true);
+    this.setTooltip("Gets the object's specified property");
+
+    this.setOnChange(function(changeEvent) {
+      if(changeEvent.type!="change") return;
+
+      this.updateShape_();
+    });
+  },
+
+  saveExtraState: function() {
+    let props=[];
+    for (let i = 0; i < this.propCount; i++) {
+      props[i]=this.getFieldValue("PROP"+i);
+    }
+
+    return {
+      props: props
+    };
+  },
+  loadExtraState: function(state) {
+    this.propCount = state.props.length;
+    this.tempProps = state.props;
+    this.updateShape_();
+  },
+
+  updateShape_: function() {
+    //if propcount is 2, it ends up at 1
+    if(this.propCount==0) this.propCount=1;
+
+    const propRow=this.getInput("PROPS");
+
+    for (let i = 0; i < this.propCount; i++) {
+      let currProp=this.getField("PROP"+i);
+      if (!currProp) {
+        propRow.appendField(new Blockly.FieldTextInput(this?.tempProps?.[i]||""),"PROP"+i);
+      }else if(i==this.propCount-1&&this.getFieldValue("PROP"+i)!=""&&this.propCount<10){
+        this.propCount++;
+      }else{
+        while(i==this.propCount-2&&(this.getFieldValue("PROP"+i)==""||i==0)&&this.getFieldValue("PROP"+(i+1))==""&&this.propCount>1){
+          this.propCount--;
+          propRow.removeField("PROP"+(i+1));
+          i--;
+        }
+      }
+    }
+    
+    for (let i = this.propCount; this.getField("PROP"+i); i++) {
+      propRow.removeField("PROP"+i);
+    }
+    delete this.tempProps;
+  },
+};
+Blockly.Blocks["object_get"]=OBJECT_GET;
+
 Blockly.defineBlocksWithJsonArray([
   eventBlock,
-  {
-    "type": "object_get",
-    "message0": "%1 get %2",
-    "args0": [
-      {
-        "type": "input_value",
-        "name": "OBJECT"
-      },
-      {
-        "type": "field_input",
-        "name": "PROPERTY",
-        "text": "property"
-      }
-    ],
-    "output": null,
-    "tooltip": "Prints to the console",
-    "helpUrl": "",
-    "style": "util_blocks",
-  },
   {
     "type": "client_globals",
     "message0": "Run on bot start %1 Toggle to run %2 %3 %4",
@@ -232,29 +277,32 @@ Blockly.defineBlocksWithJsonArray([
     "style": "util_blocks",
   },
   {
-  "type": "call_func",
-  "message0": "call %1 with %2 %3",
-  "args0": [
-    {
-      "type": "input_value",
-      "name": "FUNCTION"
-    },
-    {
-      "type": "input_dummy"
-    },
-    {
-      "type": "input_value",
-      "name": "ARGS",
-      "check": "Array"
-    }
-  ],
-  "inputsInline": true,
-  "previousStatement": null,
-  "nextStatement": null,
-  "tooltip": "Calls the specified function with the specified arguments",
-  "helpUrl": "",
-  "style": "util_blocks"
-}
+    "type": "call_func",
+    "message0": "call %1 with %2 %3",
+    "args0": [
+      {
+        "type": "input_value",
+        "name": "FUNCTION"
+      },
+      {
+        "type": "input_dummy"
+      },
+      {
+        "type": "input_value",
+        "name": "ARGS",
+        "check": "Array"
+      }
+    ],
+    "inputsInline": true,
+    "previousStatement": null,
+    "nextStatement": null,
+    "tooltip": "Calls the specified function with the specified arguments",
+    "helpUrl": "",
+    "style": "util_blocks"
+  },
+
+  //mutators
+
 ]);
 
 //--
@@ -292,11 +340,12 @@ Blockly.JavaScript['client_onevent'] = function(block) {
   let eventVarName=Blockly.JavaScript.nameDB_.getName(variable_event_data, Blockly.VARIABLE_CATEGORY_NAME);
   if(code[dropdown_discord_events][block.id]==undefined ||
     statements_on_event_func != code[dropdown_discord_events][block.id].code ||
-    eventVarName != code[dropdown_discord_events][block.id].eventVarName)
+    eventVarName != code[dropdown_discord_events][block.id].eventVarName){
     code[dropdown_discord_events][block.id] = {
       code: statements_on_event_func,
       eventVarName: eventVarName
     };
+  }
 
   return `"${dropdown_discord_events}";`;
 };
@@ -320,16 +369,14 @@ Blockly.JavaScript['client_globals'] = function(block) {
 };
 Blockly.JavaScript['object_get'] = function(block) {
   var value_object = Blockly.JavaScript.valueToCode(block, 'OBJECT', Blockly.JavaScript.ORDER_ATOMIC);
-  var text_property = block.getFieldValue('PROPERTY');
+  var code=value_object;
+  for(let i=0;i<this.propCount;i++){
+    let value=block.getFieldValue('PROP'+i);
+    if(value=="") continue;
+    code+=`?.["${value}"]`;
+  }
 
-  var code = `${value_object||"null"}?.["${text_property}"]`;
   return [code, Blockly.JavaScript.ORDER_MEMBER];
-};
-Blockly.JavaScript['text_print'] = function(block) {
-  var value_text = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_ATOMIC);
-
-  var code = `console.log(${value_text||""})`;
-  return code;
 };
 Blockly.JavaScript['custom_js'] = function(block) {
   var text_to_run = block.getFieldValue('TO_RUN');
@@ -344,6 +391,100 @@ Blockly.JavaScript['call_func'] = function(block) {
   return code;
 };
 
+
+Blockly.JavaScript['text_print'] = function(block) {
+  var value_text = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_ATOMIC);
+
+  var code = `console.log(${value_text||""});\n`;
+  return code;
+};
+
+//stinky override, figure out a way to not have to do this
+//the reason I have to do this is because idk
+//if you can find a way to fix these so i dont have to copy paste the original code in, i will
+//like pay you 20$
+Blockly.JavaScript['procedures_defreturn'] = function(block) {
+  // Define a procedure with a return value.
+  const funcName = Blockly.JavaScript.nameDB_.getName(
+      block.getFieldValue('NAME'), Blockly.Names.PROCEDURE);
+  let xfix1 = '';
+  if (Blockly.JavaScript.STATEMENT_PREFIX) {
+    xfix1 += Blockly.JavaScript.injectId(Blockly.JavaScript.STATEMENT_PREFIX, block);
+  }
+  if (Blockly.JavaScript.STATEMENT_SUFFIX) {
+    xfix1 += Blockly.JavaScript.injectId(Blockly.JavaScript.STATEMENT_SUFFIX, block);
+  }
+  if (xfix1) {
+    xfix1 = Blockly.JavaScript.prefixLines(xfix1, Blockly.JavaScript.INDENT);
+  }
+  let loopTrap = '';
+  if (Blockly.JavaScript.INFINITE_LOOP_TRAP) {
+    loopTrap = Blockly.JavaScript.prefixLines(
+        Blockly.JavaScript.injectId(Blockly.JavaScript.INFINITE_LOOP_TRAP, block),
+        Blockly.JavaScript.INDENT);
+  }
+  const branch = Blockly.JavaScript.statementToCode(block, 'STACK');
+  let returnValue =
+      Blockly.JavaScript.valueToCode(block, 'RETURN', Blockly.JavaScript.ORDER_NONE) || '';
+  let xfix2 = '';
+  if (branch && returnValue) {
+    // After executing the function body, revisit this block for the return.
+    xfix2 = xfix1;
+  }
+  if (returnValue) {
+    returnValue = Blockly.JavaScript.INDENT + 'return ' + returnValue + ';\n';
+  }
+  const args = [];
+  const variables = block.getVars();
+  for (let i = 0; i < variables.length; i++) {
+    args[i] = Blockly.JavaScript.nameDB_.getName(variables[i], Blockly.Names.VARIABLE);
+  }
+  let code = 'function ' + funcName + '(' + args.join(', ') + ') {\n' + xfix1 +
+      loopTrap + branch + xfix2 + returnValue + '}';
+  code = Blockly.JavaScript.scrub_(block, code);
+  // Add % so as not to collide with helper functions in definitions list.
+  Blockly.JavaScript.definitions_['%' + funcName] = code;
+  return null;
+};
+let origProcedure = Blockly.JavaScript['procedures_defreturn'];
+Blockly.JavaScript['procedures_defreturn'] = function(block) {
+  origProcedure(block);
+
+  const funcCode = Blockly.JavaScript.definitions_['%' + 
+    Blockly.JavaScript.nameDB_.getName(
+      block.getFieldValue('NAME'), Blockly.Names.PROCEDURE)];
+
+  if(code.onStart[block.id]==undefined || 
+    funcCode != code.onStart[block.id].code){
+    code.onStart[block.id]={code:funcCode};
+    internalWebsocket.send(JSON.stringify({
+      event: "updateCode",
+      data: {
+        event: "onStart",
+        id: block.id,
+        isFunc: true,
+        code: funcCode,
+        eventVarName: ""
+      }
+    }));
+  }
+  return null;
+};
+Blockly.JavaScript['procedures_defnoreturn'] = Blockly.JavaScript['procedures_defreturn'];
+
+Blockly.JavaScript['procedures_callreturn'] = function(block) {
+  // Call a procedure with a return value.
+  const funcName = Blockly.JavaScript.nameDB_.getName(
+      block.getFieldValue('NAME'), Blockly.Names.PROCEDURE);
+  const args = [];
+  const variables = block.getVars();
+  for (let i = 0; i < variables.length; i++) {
+    args[i] = Blockly.JavaScript.valueToCode(block, 'ARG' + i, Blockly.JavaScript.ORDER_NONE) ||
+        'null';
+  }
+  const code = funcName + '(' + args.join(', ') + ')';
+  return [code, Blockly.JavaScript.ORDER_FUNCTION_CALL];
+};
 
 //--
 

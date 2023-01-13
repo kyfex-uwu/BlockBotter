@@ -228,6 +228,9 @@ exports.supplyEditor=function(editor){
                     code: new VMScript(response.data.code),
                     eventVarName: response.data.eventVarName
                 };
+                if(response.data.isFunc){
+                    codeVM.run(codeEvents[response.data.event][response.data.id].code);
+                }
                 break;
             case "deleteBlock":
                 delete codeEvents[response.data.event][response.data.id];
