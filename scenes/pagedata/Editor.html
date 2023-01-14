@@ -1,5 +1,13 @@
 <script src="https://unpkg.com/blockly@9.2.0/blockly.min.js"></script>
-<div id="blocklyMeasurer" style="width: 100%; height: 100%;"></div>
+<div id="blocklyMeasurer" style="
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	position: relative;
+	pointer-events:none;
+	background-color: #aFF;
+	opacity: 0;
+"></div>
 <div id="blocklyArea" style="
 	position: absolute;
 	color: black;
@@ -295,4 +303,8 @@
 		<block type="client_onevent"></block>
 		<block type="client_globals"></block>
 	</category>
+
+	<freezeButton></freezeButton>
+	<revertButton></revertButton>
+	<saveButton></saveButton>
 </xml>

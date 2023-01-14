@@ -218,6 +218,8 @@ exports.supplyFrontEnd=function(frontEnd){
     }));
 }
 
+const fs = require("fs");
+fs.open("./botBlocks.json","w",()=>{});
 exports.supplyEditor=function(editor){
     editor.on("message",(event)=>{
         let response=JSON.parse(event);
@@ -237,6 +239,26 @@ exports.supplyEditor=function(editor){
                 break;
             case "runStart":
                 codeVM.run(codeEvents.onStart[response.data.id].code);
+                break;
+            case "saveJson":
+                fs.writeFileSync("./botBlocks.json", JSON.stringify(response.data,null,"    "));
+                break;
+            case "delayedCodeUpdate":
+                editor._events.message(response.data);
+                editor.send("next pls");
+                break;
+            case "load":
+                if (fs.existsSync("./botBlocks.json")) {
+                  editor.send(JSON.stringify({
+                    event: "workspace",
+                    data: fs.readFileSync("./botBlocks.json").toString()
+                  }));
+                } else {
+                  editor.send(JSON.stringify({
+                    event: "workspace",
+                    data: "{}"
+                  }));
+                }
                 break;
         }
     });

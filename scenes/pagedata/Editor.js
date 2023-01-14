@@ -1,67 +1,3 @@
-const workspace = Blockly.inject("blocklyArea", {
-  toolbox: document.getElementById("toolbox"),
-  theme: Blockly.Themes.Zelos,
-
-  theme: Blockly.Theme.defineTheme('dark', {
-    'base': Blockly.Themes.Classic,
-    'componentStyles': {
-      'workspaceBackgroundColour': '#1e1e1e',
-      'toolboxBackgroundColour': 'blackBackground',
-      'toolboxForegroundColour': '#fff',
-      'flyoutBackgroundColour': '#252526',
-      'flyoutForegroundColour': '#ccc',
-      'flyoutOpacity': 1,
-      'scrollbarColour': '#797979',
-      'insertionMarkerColour': '#fff',
-      'insertionMarkerOpacity': 0.3,
-      'scrollbarOpacity': 0.4,
-      'cursorColour': '#d0d0d0',
-      'blackBackground': '#333'
-    },
-
-    'startHats': true,
-
-    'categoryStyles':{
-      "discord_category": {
-        "colour": "#5865F2"
-      },
-      "util_category": {
-        "colour": "#ff9500"
-      },
-    },
-    'blockStyles':{
-      "discord_blocks": {
-        "colourPrimary": "#5865F2",
-        "colourSecondary":"#454FBF",
-        "colourTertiary":"#7289DA"
-      },
-      "util_blocks": {
-        "colourPrimary": "#ff9500",
-        "colourSecondary":"#b5761d",
-        "colourTertiary":"#ffb366"
-      },
-    },
-  }),
-});
-
-//--
-
-const blocklyMeasurer = document.getElementById("blocklyMeasurer");
-const blocklyArea = document.getElementById("blocklyArea");
-const resize=function(){
-  let dims = blocklyMeasurer.getBoundingClientRect();
-
-  blocklyArea.style.left = dims.left + 'px';
-  blocklyArea.style.top = dims.top + 'px';
-  blocklyArea.style.width = dims.right-dims.left + 'px';
-  blocklyArea.style.height = dims.bottom-dims.top + 'px';
-  Blockly.svgResize(workspace);
-};
-window.addEventListener('resize',resize, false);
-resize();
-
-//--
-
 let eventBlock={
   "type": "client_onevent",
   "message0": "client on event %1 : %2 %3 %4",
@@ -90,9 +26,19 @@ let eventBlock={
     }
   ],
   "tooltip": "Runs when the specified event happens",
-  "helpUrl": "https://discord.js.org/#/docs/discord.js/main/class/Client?scrollTo=e-applicationCommandPermissionsUpdate",
+  "helpUrl": "https://discord.js.org/#/docs/discord.js/main/class/Client",
+  "extensions": ["client_onevent_extension"],
   "style": "discord_blocks",
 };
+Blockly.Extensions.register(
+  "client_onevent_extension",
+  function() {
+    let thisBlock = this;
+    this.setHelpUrl(function() {
+      return "https://discord.js.org/#/docs/discord.js/main/class/Client?scrollTo=e-"+
+        thisBlock.getFieldValue("DISCORD_EVENTS")
+    });
+  });
 
 // https://discord.js.org/#/docs/discord.js/main/class/Client
 // #/docs/discord\.js/main/class/Client\?scrollTo=e-([^"]*)
@@ -170,7 +116,7 @@ let eventNames=[
 ];
 eventBlock.args0[0].options=eventNames;
 
-const OBJECT_GET = {
+Blockly.Blocks["object_get"] = {
   init: function(){
     this.appendValueInput("OBJECT");
     this.appendDummyInput("PROPS").appendField("get");
@@ -232,8 +178,8 @@ const OBJECT_GET = {
     delete this.tempProps;
   },
 };
-Blockly.Blocks["object_get"]=OBJECT_GET;
 
+//https://discord.js.org/#/docs/discord.js/main/class/Client?scrollTo=e-
 Blockly.defineBlocksWithJsonArray([
   eventBlock,
   {
@@ -315,7 +261,7 @@ eventNames.forEach((event)=>{
     set(obj, prop, value) {
       obj[prop]=value;
 
-      internalWebsocket.send(JSON.stringify({
+      wsSend(JSON.stringify({
         event: "updateCode",
         data: {
           event:event[1],
@@ -355,7 +301,7 @@ Blockly.JavaScript['client_globals'] = function(block) {
   if(code.onStart[block.id]==undefined || 
     statements_onstart != code.onStart[block.id].code){
     code.onStart[block.id]={code:statements_onstart};
-    internalWebsocket.send(JSON.stringify({
+    wsSend(JSON.stringify({
       event: "updateCode",
       data: {
         event: "onStart",
@@ -398,66 +344,17 @@ Blockly.JavaScript['text_print'] = function(block) {
   var code = `console.log(${value_text||""});\n`;
   return code;
 };
-
-//stinky override, figure out a way to not have to do this
-//the reason I have to do this is because idk
-//if you can find a way to fix these so i dont have to copy paste the original code in, i will
-//like pay you 20$
-Blockly.JavaScript['procedures_defreturn'] = function(block) {
-  // Define a procedure with a return value.
-  const funcName = Blockly.JavaScript.nameDB_.getName(
-      block.getFieldValue('NAME'), Blockly.Names.PROCEDURE);
-  let xfix1 = '';
-  if (Blockly.JavaScript.STATEMENT_PREFIX) {
-    xfix1 += Blockly.JavaScript.injectId(Blockly.JavaScript.STATEMENT_PREFIX, block);
-  }
-  if (Blockly.JavaScript.STATEMENT_SUFFIX) {
-    xfix1 += Blockly.JavaScript.injectId(Blockly.JavaScript.STATEMENT_SUFFIX, block);
-  }
-  if (xfix1) {
-    xfix1 = Blockly.JavaScript.prefixLines(xfix1, Blockly.JavaScript.INDENT);
-  }
-  let loopTrap = '';
-  if (Blockly.JavaScript.INFINITE_LOOP_TRAP) {
-    loopTrap = Blockly.JavaScript.prefixLines(
-        Blockly.JavaScript.injectId(Blockly.JavaScript.INFINITE_LOOP_TRAP, block),
-        Blockly.JavaScript.INDENT);
-  }
-  const branch = Blockly.JavaScript.statementToCode(block, 'STACK');
-  let returnValue =
-      Blockly.JavaScript.valueToCode(block, 'RETURN', Blockly.JavaScript.ORDER_NONE) || '';
-  let xfix2 = '';
-  if (branch && returnValue) {
-    // After executing the function body, revisit this block for the return.
-    xfix2 = xfix1;
-  }
-  if (returnValue) {
-    returnValue = Blockly.JavaScript.INDENT + 'return ' + returnValue + ';\n';
-  }
-  const args = [];
-  const variables = block.getVars();
-  for (let i = 0; i < variables.length; i++) {
-    args[i] = Blockly.JavaScript.nameDB_.getName(variables[i], Blockly.Names.VARIABLE);
-  }
-  let code = 'function ' + funcName + '(' + args.join(', ') + ') {\n' + xfix1 +
-      loopTrap + branch + xfix2 + returnValue + '}';
-  code = Blockly.JavaScript.scrub_(block, code);
-  // Add % so as not to collide with helper functions in definitions list.
-  Blockly.JavaScript.definitions_['%' + funcName] = code;
-  return null;
-};
 let origProcedure = Blockly.JavaScript['procedures_defreturn'];
 Blockly.JavaScript['procedures_defreturn'] = function(block) {
   origProcedure(block);
 
   const funcCode = Blockly.JavaScript.definitions_['%' + 
-    Blockly.JavaScript.nameDB_.getName(
-      block.getFieldValue('NAME'), Blockly.Names.PROCEDURE)];
+    Blockly.JavaScript.nameDB_.db.get(Blockly.Names.NameType.PROCEDURE).get(block.getFieldValue('NAME'))];
 
   if(code.onStart[block.id]==undefined || 
     funcCode != code.onStart[block.id].code){
     code.onStart[block.id]={code:funcCode};
-    internalWebsocket.send(JSON.stringify({
+    wsSend(JSON.stringify({
       event: "updateCode",
       data: {
         event: "onStart",
@@ -472,32 +369,261 @@ Blockly.JavaScript['procedures_defreturn'] = function(block) {
 };
 Blockly.JavaScript['procedures_defnoreturn'] = Blockly.JavaScript['procedures_defreturn'];
 
-Blockly.JavaScript['procedures_callreturn'] = function(block) {
-  // Call a procedure with a return value.
-  const funcName = Blockly.JavaScript.nameDB_.getName(
-      block.getFieldValue('NAME'), Blockly.Names.PROCEDURE);
-  const args = [];
-  const variables = block.getVars();
-  for (let i = 0; i < variables.length; i++) {
-    args[i] = Blockly.JavaScript.valueToCode(block, 'ARG' + i, Blockly.JavaScript.ORDER_NONE) ||
-        'null';
+//--
+
+function returnButton(text,onClick,classes,data){
+  return class extends Blockly.ToolboxItem{
+    constructor(separatorDef, toolbox) {
+      super(separatorDef, toolbox);
+
+      this.htmlDiv_ = null;
+
+      this.buttonData={};
+      if(data){
+        Object.keys(data).forEach((key)=>{
+          this.buttonData[key]=data[key];
+        });
+      }
+    }
+
+    init() {
+      this.createDom_();
+    }
+    createDom_() {
+      const container = document.createElement('div');
+      let tempThis=this;
+      container.addEventListener("click",()=>{
+        onClick.call(this);
+      });
+      container.innerText=text;
+      Blockly.utils.dom.addClass(container, "toolbarButton");
+      classes.forEach((className)=>{
+        Blockly.utils.dom.addClass(container, className);
+      });
+      this.htmlDiv_ = container;
+      return container;
+    }
+    getDiv() {
+      return this.htmlDiv_;
+    }
+    dispose() {
+      Blockly.utils.dom.removeNode(this.htmlDiv_);
+    }
   }
-  const code = funcName + '(' + args.join(', ') + ')';
-  return [code, Blockly.JavaScript.ORDER_FUNCTION_CALL];
+}
+Blockly.Css.register(`
+.toolbarButton{
+  margin: 5px;
+  padding: 0 10px;
+  border-radius: 5px;
+  font-weight: bold;
+
+  cursor: pointer;
+}
+.toolbarButton:hover{
+  opacity: 0.8;
+}
+.blocklyToolboxDiv[layout="h"] .toolbarButton {
+  /*todo, untested*/
+  right: 0;
+}
+`);
+
+let frozenDom = null;
+let isCurrentlyFrozen=false;
+
+Blockly.registry.register(
+  Blockly.registry.Type.TOOLBOX_ITEM,
+  "saveButton",
+  returnButton("Save",(event)=>{
+    if(confirm("Do you want to save? (Overwrites previous data)")){
+      wsSend(JSON.stringify({
+        event: "saveJson",
+        data: Blockly.serialization.workspaces.save(workspace)
+      }));
+    }
+  },
+  ["saveButton"]
+));
+Blockly.registry.register(
+  Blockly.registry.Type.TOOLBOX_ITEM,
+  "freezeButton",
+  returnButton("Freeze",function(event){
+    this.buttonData.frozen=!this.buttonData.frozen;
+    if(this.buttonData.frozen){
+      this.htmlDiv_.innerText="Unfreeze";
+      this.htmlDiv_.style['background-color']="#4c4599";
+      document.getElementById("blocklyMeasurer").style['opacity']=0.1;
+      frozenDom = Blockly.serialization.workspaces.save(workspace);
+      isCurrentlyFrozen=true;
+
+      Blockly.getMainWorkspace().getToolbox().contents_
+        .find((element)=>element.toolboxItemDef_.kind=="REVERTBUTTON")
+        .htmlDiv_.style['display'] = "initial";
+    }else{
+      this.htmlDiv_.innerText="Freeze";
+      this.htmlDiv_.style['background-color']="";
+
+      Blockly.getMainWorkspace().getToolbox().contents_
+        .find((element)=>element.toolboxItemDef_.kind=="REVERTBUTTON")
+        .htmlDiv_.style['display'] = "none";
+
+      if(toSendQueue.length>0){
+        let thenable = new Promise((resolve,reject)=>{
+          internalWebsocket.send(JSON.stringify({
+            event:"delayedCodeUpdate",
+            data:toSendQueue[0]
+          }));
+          nextMessageResolver=resolve;
+        });
+        for(let i=1;i<toSendQueue.length;i++){
+          thenable=thenable.then((resolve)=>{
+            internalWebsocket.send(JSON.stringify({
+              event:"delayedCodeUpdate",
+              data:toSendQueue[i]
+            }));
+
+            if(i==toSendQueue.length-1){
+              toSendQueue=[];
+              isCurrentlyFrozen=false;
+              document.getElementById("blocklyMeasurer").style['opacity']=0;
+              frozenDom = null;
+            }else{
+              nextMessageResolver=resolve;
+            }
+          });
+        }
+      }else{
+        isCurrentlyFrozen=false;
+        document.getElementById("blocklyMeasurer").style['opacity']=0;
+        frozenDom = null;
+      }
+    }
+  },
+  ["freezeButton"],
+  { frozen: false }
+));
+Blockly.registry.register(
+  Blockly.registry.Type.TOOLBOX_ITEM,
+  "revertButton",
+  returnButton("Revert",function(event){
+    toSendQueue=[];
+
+    Blockly.serialization.workspaces.load(frozenDom, workspace);
+    document.querySelector(".freezeButton").click();
+    this.htmlDiv_.style['display'] = "none";
+  },
+  ["revertButton"]
+));
+Blockly.Css.register(`
+.saveButton {
+  background-color: #b1c951;
+}
+.freezeButton {
+  background-color: #68a0e3;
+}
+.revertButton{
+  background-color: #e3345a;
+  display: none;
+}
+`);
+
+//--
+
+const workspace = Blockly.inject("blocklyArea", {
+  toolbox: document.getElementById("toolbox"),
+  theme: Blockly.Themes.Zelos,
+
+  theme: Blockly.Theme.defineTheme('dark', {
+    'base': Blockly.Themes.Classic,
+    'componentStyles': {
+      'workspaceBackgroundColour': '#1e1e1e',
+      'toolboxBackgroundColour': 'blackBackground',
+      'toolboxForegroundColour': '#fff',
+      'flyoutBackgroundColour': '#252526',
+      'flyoutForegroundColour': '#ccc',
+      'flyoutOpacity': 1,
+      'scrollbarColour': '#797979',
+      'insertionMarkerColour': '#fff',
+      'insertionMarkerOpacity': 0.3,
+      'scrollbarOpacity': 0.4,
+      'cursorColour': '#d0d0d0',
+      'blackBackground': '#333'
+    },
+
+    'startHats': true,
+
+    'categoryStyles':{
+      "discord_category": {
+        "colour": "#5865F2"
+      },
+      "util_category": {
+        "colour": "#ff9500"
+      },
+    },
+    'blockStyles':{
+      "discord_blocks": {
+        "colourPrimary": "#5865F2",
+        "colourSecondary":"#454FBF",
+        "colourTertiary":"#7289DA"
+      },
+      "util_blocks": {
+        "colourPrimary": "#ff9500",
+        "colourSecondary":"#b5761d",
+        "colourTertiary":"#ffb366"
+      },
+    },
+  }),
+});
+
+
+const blocklyMeasurer = document.getElementById("blocklyMeasurer");
+const blocklyArea = document.getElementById("blocklyArea");
+const resize=function(){
+  let dims = blocklyMeasurer.getBoundingClientRect();
+
+  blocklyArea.style.left = dims.left + 'px';
+  blocklyArea.style.top = dims.top + 'px';
+  blocklyArea.style.width = dims.right-dims.left + 'px';
+  blocklyArea.style.height = dims.bottom-dims.top + 'px';
+  Blockly.svgResize(workspace);
 };
+window.addEventListener('resize',resize, false);
+resize();
 
 //--
 
 let internalWebsocket = new WebSocket("ws://localhost:3001");
 internalWebsocket.addEventListener('open', (event) => {
   internalWebsocket.send("editor");
+  internalWebsocket.send(JSON.stringify({event:"load"}));
 });
+internalWebsocket.addEventListener("message",(event)=>{
+  let response = event.data.toString();
+  if(response=="next pls"&&nextMessageResolver)
+    nextMessageResolver();
+
+  response=JSON.parse(response);
+  if(response.event=="workspace"){
+    Blockly.serialization.workspaces.load(response.data, workspace);
+  }
+});
+
+let toSendQueue=[];
+let nextMessageResolver=null;
+function wsSend(data){
+  if(isCurrentlyFrozen){
+    toSendQueue.push(data);
+  }else{
+    internalWebsocket.send(data);
+  }
+}
 
 let lastCode="";
 workspace.addChangeListener((event)=>{
   if(event.type==Blockly.Events.BLOCK_DELETE&&
     (event.oldJson.type=="client_onevent"||event.oldJson.type=="client_globals")){
-    internalWebsocket.send(JSON.stringify({
+    wsSend(JSON.stringify({
       event: "deleteBlock",
       data: {
         event: event.oldJson.type=="client_globals"?"onStart":event.oldJson.fields['DISCORD_EVENTS'],
@@ -509,7 +635,7 @@ workspace.addChangeListener((event)=>{
     workspace.getBlockById(event.blockId).type=="client_onevent"&&
     event.name=="DISCORD_EVENTS"){
     delete code[event.oldValue][event.blockId];
-    internalWebsocket.send(JSON.stringify({
+    wsSend(JSON.stringify({
       event: "deleteBlock",
       data: {
         event: event.oldValue,
@@ -519,7 +645,7 @@ workspace.addChangeListener((event)=>{
   }
   if(event.type==Blockly.Events.BLOCK_CHANGE&&
     workspace.getBlockById(event.blockId).type=="client_globals"){
-    internalWebsocket.send(JSON.stringify({
+    wsSend(JSON.stringify({
       event: "runStart",
       data: {
         id: event.blockId
@@ -529,6 +655,3 @@ workspace.addChangeListener((event)=>{
 
   Blockly.JavaScript.workspaceToCode(workspace);
 });
-
-//Blockly.serialization.workspaces.save(workspace) 
-//saves to json
