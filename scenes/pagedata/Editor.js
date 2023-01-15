@@ -600,8 +600,14 @@ internalWebsocket.addEventListener('open', (event) => {
 });
 internalWebsocket.addEventListener("message",(event)=>{
   let response = event.data.toString();
-  if(response=="next pls"&&nextMessageResolver)
+  if(response=="next pls"&&nextMessageResolver){
     nextMessageResolver();
+    return;
+  }
+  if(response=="inv client"){
+    location.replace("/main");
+    return;
+  }
 
   response=JSON.parse(response);
   if(response.event=="workspace"){

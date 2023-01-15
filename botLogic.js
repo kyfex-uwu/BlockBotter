@@ -1,8 +1,6 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const client = new Client({ intents: 2097152*2-1 });//all intents >:3
 
-let currentChannel; //channel user is looking at
-
 //--
 
 exports.initialize=function(token){
@@ -103,31 +101,47 @@ eventNames.forEach((event)=>{
     codeEvents[event]={};
 });
 
+let frontEnds=[];
+function addToFrontEnds(frontEnd) {
+    var last = 0;
+    frontEnds.some(function (_, i) {
+        return last < i || !++last;
+    });
+    frontEnds[last]=frontEnd;
+    return last;
+}
+client.on("messageCreate", (message)=>{
+    frontEnds.forEach((frontEnd)=>{
+        frontEnd.send(JSON.stringify({
+            event: "addMessage",
+            data: {
+                content: message.content,
+                channel: message.channel.id,
+                pfp: message.author!=undefined ?
+                    (message.member || message.author).displayAvatarURL() : "none",
+                name: message.member!=undefined ? 
+                    message.member.displayName : message.author.username//TODO
+            }
+        }));
+    });
+});
+eventNames.forEach((event=>{
+    client.on(event, (eventData)=>{
+        Object.values(codeEvents[event]).forEach(value => {
+            codeVM.sandbox[value.eventVarName]=eventData;
+            codeVM.run(value.code);
+        });
+    });
+}));
 exports.supplyFrontEnd=function(frontEnd){
+    let frontEndIndex=addToFrontEnds(frontEnd);
+
     client.guilds.cache.forEach((guild)=>{
         frontEnd.send(JSON.stringify({
             event: "addGuild",
             data: guild
         }));
     });
-
-    client.on("messageCreate", (message)=>{
-        if(message.channelId==currentChannel){
-            frontEnd.send(JSON.stringify({
-                event: "addMessage",
-                data: {
-                    content: message.content,
-                    pfp: message.author!=undefined ?
-                        (message.member || message.author).displayAvatarURL() : "none",
-                    name: message.member!=undefined ? 
-                        message.member.displayName : message.author.username//TODO
-                }
-            }));
-        }
-    });
-
-    //--
-
     frontEnd.on("message",(event)=>{
         let response=JSON.parse(event);
 
@@ -156,7 +170,6 @@ exports.supplyFrontEnd=function(frontEnd){
                     break;
                 case "getChannelMessagesVisual":
                     let channel = client.channels.cache.get(response.data.channel);
-                    currentChannel = response.data;
                     if(!channel.isTextBased()){
                         frontEnd.send(JSON.stringify({
                             responseToRequest: true,
@@ -204,28 +217,27 @@ exports.supplyFrontEnd=function(frontEnd){
             
         }
     });
-
-    //--
-
-    console.log("initing listeners")
-    eventNames.forEach((event=>{
-        client.on(event, (eventData)=>{
-            Object.values(codeEvents[event]).forEach(value => {
-                codeVM.sandbox[value.eventVarName]=eventData;
-                codeVM.run(value.code);
-            });
-        });
-    }));
+    frontEnd.on("close",(event)=>{
+        delete frontEnds[frontEndIndex];
+    })
 }
 
+let mainEditor=null;
 const fs = require("fs");
 fs.open("./botBlocks.json","w",()=>{});
 exports.supplyEditor=function(editor){
+    if(mainEditor){
+        editor.send("inv client");
+        return;
+    }
+
+    mainEditor=editor;
     editor.on("message",(event)=>{
         let response=JSON.parse(event);
 
         switch(response.event){
             case "updateCode":
+                console.log(response.data.event)
                 codeEvents[response.data.event][response.data.id]={
                     code: new VMScript(response.data.code),
                     eventVarName: response.data.eventVarName
@@ -261,6 +273,9 @@ exports.supplyEditor=function(editor){
                 }
                 break;
         }
+    });
+    editor.on("close",(event)=>{
+        mainEditor=null;
     });
 }
 

@@ -16,8 +16,6 @@ internalServer.on('connection', (ws) => {
         break;
     }
   });
-
-  ws.on('close', () => console.log('Client has disconnected!'));
 });
 
 //--
@@ -116,5 +114,6 @@ async function commandLineHandler(...input) {
 };
 
 process.on('uncaughtException', function(err) {
-  console.log('Caught exception: ' + err);
+  console.log('Caught exception: ');
+  console.log(err);
 });

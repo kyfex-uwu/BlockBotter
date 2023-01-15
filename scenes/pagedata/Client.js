@@ -15,7 +15,8 @@ internalWebsocket.addEventListener('message',(event)=>{
 			addServerIcon(response.data);
 			break;
 		case "addMessage":
-			addMessage(response.data,"new");
+			if(response.data.channel==currentChannel)
+				addMessage(response.data,"new");
 			break;
 	}
 });
@@ -75,6 +76,13 @@ function switchGuild(guildId){
 
 let currentChannel;//id
 function switchChannel(channelId){
+	try{
+		document.querySelector(`[data-discordid="${channelId}"]`)
+			.classList.add("selected");
+		document.querySelector(`[data-discordid="${currentChannel}"]`)
+			.classList.remove("selected");
+	}catch(e){}
+
 	currentChannel=channelId;
 	messageContainer.textContent = "";
 
@@ -94,7 +102,7 @@ messageContainer.addEventListener("scroll",(scroll)=>{
 		loadingMessages=true;
 		sendAndWait("getChannelMessagesVisual",{
 			channel: currentChannel,
-			before: messageContainer.children[0].getAttribute("data-messageid")
+			before: messageContainer.children[0]?.getAttribute("data-messageid")
 		}).then((messages)=>{
 			let toScroll=messageContainer.children[0];
 			messages.forEach((message)=>{
