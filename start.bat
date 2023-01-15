@@ -1,2 +1,2 @@
-npm install --prefer-offline
+call npm install --prefer-offline
 node app.js
