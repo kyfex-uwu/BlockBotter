@@ -6,12 +6,31 @@
 	position: relative;
 	pointer-events:none;
 	background-color: #aFF;
-	opacity: 0;
-"></div>
+	opacity: 0;"></div>
 <div id="blocklyArea" style="
 	position: absolute;
 	color: black;
-	"></div>
+	">
+		<a href="/client" id="clientButton">Client</a>
+	</div>
+
+<style>
+	#clientButton{
+	    font-size: 1.5em;
+	    background-color: var(--bs-green);
+	    color: white;
+	    padding: 0 var(--padding);
+	    border-radius: var(--border-radius);
+	    text-decoration: none;
+	    position: absolute;
+		z-index: 9999;
+		top: var(--padding);
+		right: var(--padding);
+	  }
+	  #clientButton:hover{
+	    opacity: 0.8;
+	  }
+</style>
 
 <!-- https://stackoverflow.com/questions/59416963/what-are-the-default-blockly-blocks -->
 <xml id="toolbox" style="display: none">

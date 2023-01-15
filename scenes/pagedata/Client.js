@@ -4,6 +4,11 @@ internalWebsocket.addEventListener('open', (event) => {
 });
 
 internalWebsocket.addEventListener('message',(event)=>{
+	if(event.data.toString()=="login"){
+    location.replace("/?error=Not logged in");
+    return;
+	}
+
 	let response=JSON.parse(event.data);
 	if(response.responseToRequest){
 		//resolve the promise with the event data
@@ -74,6 +79,8 @@ function switchGuild(guildId){
 		});
 }
 
+let loadingMessages=false;
+
 let currentChannel;//id
 function switchChannel(channelId){
 	try{
@@ -86,6 +93,7 @@ function switchChannel(channelId){
 	currentChannel=channelId;
 	messageContainer.textContent = "";
 
+	loadingMessages=true;
 	sendAndWait("getChannelMessagesVisual",{channel: channelId})
 		.then((messages)=>{
 			messages.forEach((message)=>{
@@ -93,10 +101,10 @@ function switchChannel(channelId){
 			});
 
 			messageContainer.scroll({top:9999,behavior:"smooth"});
+			loadingMessages=false;
 		});
 }
 
-let loadingMessages=false;
 messageContainer.addEventListener("scroll",(scroll)=>{
 	if(messageContainer.scrollTop==0&&!loadingMessages){
 		loadingMessages=true;
@@ -143,14 +151,24 @@ function addMessage(messageData, position){
 			<div style="word-break: break-word;">
 			${cleanMessage(messageData.content)}
 			</div>
-		</span>`(toAdd);
+		</span>`(toAdd).children[1].children[1]
+			.querySelectorAll("[data-codeblock]")
+			.forEach((element)=>{
+				element.innerText=bigCodeBlocks[element.getAttribute("data-codeblock")];
+			});
+			//todo: add attachments, embeds, and action rows
+	bigCodeBlocks=[];
 }
 
+let bigCodeBlocks=[];
 function cleanMessage(str){
-	return str.replaceAll("\n","<br>")
-	.replaceAll(/```(([^`]|([^`]..)|(.[^`].)|(..[^`]))+?)```/gs, (match, capture1)=>{ //multi line code blocks
-		return `<div><code>${capture1}</code></div>`;
-	}).replaceAll(/\*\*(([^*]|([^*].)|([^*].))+?)\*\*/g, (match, capture1)=>{ //bold
+	return str.replaceAll(/```(([^`]|([^`]..)|(.[^`].)|(..[^`]))+?)```/gs, (match, capture1)=>{ //big code blocks
+		return `<div><code data-codeblock=${bigCodeBlocks.push(capture1)-1}></code></div>`;
+	})
+	.replaceAll("\n","<br>") //line breaks
+	.replaceAll(/`([^`]+?)`/g, (match, capture1)=>{ //inline code
+		return `<code>${capture1}</code>`;
+	}).replaceAll(/\*\*(([^*]|([^*]..)|(.[^*].)|(..[^*]))+?)\*\*/g, (match, capture1)=>{ //bold
 		return `<b>${capture1}</b>`;
 	}).replaceAll(/\*(([^*]|([^*].)|(.[^*]))+?)\*/g, (match, capture1)=>{ //italic
 		return `<em>${capture1}</em>`;
@@ -170,5 +188,5 @@ function cleanMessage(str){
 		return `<span class="mention" data-mention-waiter="${capture1}">${capture1}</span>`;
 	}).replaceAll(/<:.+?:(\d+?)>/g, (match, capture1) => { //emojis
 	    return `<span class="emoji"><img src="https://cdn.discordapp.com/emojis/${capture1}"></span>`;
-	});
+	})
 }

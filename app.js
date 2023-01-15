@@ -51,7 +51,13 @@ app.get("/login",(req,res)=>{
     .then((token)=>{
       res.redirect("/client");
     },(e)=>{
-      res.redirect("/?error="+"Login-"+e.code);
+      let errorMessage="Login error: "+e.code;
+      switch(e.code){
+        case "TokenInvalid":
+          errorMessage="Invalid token";
+          break;
+      }
+      res.redirect("/?error="+errorMessage);
     });
 });
 

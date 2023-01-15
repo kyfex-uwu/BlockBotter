@@ -134,6 +134,11 @@ eventNames.forEach((event=>{
     });
 }));
 exports.supplyFrontEnd=function(frontEnd){
+    if(!client.user){
+        frontEnd.send("login");
+        return;
+    }
+
     let frontEndIndex=addToFrontEnds(frontEnd);
 
     client.guilds.cache.forEach((guild)=>{
@@ -226,6 +231,10 @@ let mainEditor=null;
 const fs = require("fs");
 fs.open("./botBlocks.json","w",()=>{});
 exports.supplyEditor=function(editor){
+    if(!client.user){
+        editor.send("login");
+        return;
+    }
     if(mainEditor){
         editor.send("inv client");
         return;
@@ -237,7 +246,6 @@ exports.supplyEditor=function(editor){
 
         switch(response.event){
             case "updateCode":
-                console.log(response.data.event)
                 codeEvents[response.data.event][response.data.id]={
                     code: new VMScript(response.data.code),
                     eventVarName: response.data.eventVarName

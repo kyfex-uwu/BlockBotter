@@ -448,7 +448,7 @@ Blockly.registry.register(
 Blockly.registry.register(
   Blockly.registry.Type.TOOLBOX_ITEM,
   "freezeButton",
-  returnButton("Freeze",function(event){
+  returnButton("Freeze",async function(event){
     this.buttonData.frozen=!this.buttonData.frozen;
     if(this.buttonData.frozen){
       this.htmlDiv_.innerText="Unfreeze";
@@ -461,6 +461,9 @@ Blockly.registry.register(
         .find((element)=>element.toolboxItemDef_.kind=="REVERTBUTTON")
         .htmlDiv_.style['display'] = "initial";
     }else{
+      if(this.buttonData.unfreezing) return;
+      this.buttonData.unfreezing=true;
+
       this.htmlDiv_.innerText="Freeze";
       this.htmlDiv_.style['background-color']="";
 
@@ -468,40 +471,25 @@ Blockly.registry.register(
         .find((element)=>element.toolboxItemDef_.kind=="REVERTBUTTON")
         .htmlDiv_.style['display'] = "none";
 
-      if(toSendQueue.length>0){
-        let thenable = new Promise((resolve,reject)=>{
-          internalWebsocket.send(JSON.stringify({
-            event:"delayedCodeUpdate",
-            data:toSendQueue[0]
-          }));
+      for(let i=0;i<toSendQueue.length;i++){
+        internalWebsocket.send(JSON.stringify({
+          event:"delayedCodeUpdate",
+          data:toSendQueue[i]
+        }));
+
+        await new Promise((resolve)=>{
           nextMessageResolver=resolve;
         });
-        for(let i=1;i<toSendQueue.length;i++){
-          thenable=thenable.then((resolve)=>{
-            internalWebsocket.send(JSON.stringify({
-              event:"delayedCodeUpdate",
-              data:toSendQueue[i]
-            }));
-
-            if(i==toSendQueue.length-1){
-              toSendQueue=[];
-              isCurrentlyFrozen=false;
-              document.getElementById("blocklyMeasurer").style['opacity']=0;
-              frozenDom = null;
-            }else{
-              nextMessageResolver=resolve;
-            }
-          });
-        }
-      }else{
-        isCurrentlyFrozen=false;
-        document.getElementById("blocklyMeasurer").style['opacity']=0;
-        frozenDom = null;
       }
+      toSendQueue=[];
+      isCurrentlyFrozen=false;
+      this.buttonData.unfreezing=false;
+      document.getElementById("blocklyMeasurer").style['opacity']=0;
+      frozenDom = null;
     }
   },
   ["freezeButton"],
-  { frozen: false }
+  { frozen: false, unfreezing: false }
 ));
 Blockly.registry.register(
   Blockly.registry.Type.TOOLBOX_ITEM,
@@ -600,12 +588,16 @@ internalWebsocket.addEventListener('open', (event) => {
 });
 internalWebsocket.addEventListener("message",(event)=>{
   let response = event.data.toString();
-  if(response=="next pls"&&nextMessageResolver){
+  if(response=="next pls"){
     nextMessageResolver();
     return;
   }
   if(response=="inv client"){
-    location.replace("/main");
+    location.replace("/?error=Only one editor allowed");
+    return;
+  }
+  if(response=="login"){
+    location.replace("/?error=Not logged in");
     return;
   }
 
