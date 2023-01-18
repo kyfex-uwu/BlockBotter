@@ -10,7 +10,8 @@ BlockBotter is a fast and intuitive way for *anyone* to create a Discord Bot! Po
 # Getting started
 
 ### Requirements
- - NodeJS and npm
+ - [NodeJS](https://nodejs.org/)
+ - npm (it comes with NodeJS)
  - and that's it!
 
 ### To use
