@@ -3,11 +3,23 @@ const client = new Client({ intents: 2097152*2-1 });//all intents >:3
 
 //--
 
+let onReady=undefined;
+
 exports.initialize=function(token){
-    return client.login(token);
+    return new Promise((resolve,reject)=>{
+        onReady=resolve;
+
+        client.login(token).then(()=>{},reject);
+    });
 }
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
+    onReady({
+        name: client.user.username,
+        id: client.user.id,
+        token:client.token
+    });
 });
 
 //--

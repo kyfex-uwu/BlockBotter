@@ -130,3 +130,6 @@ dist
 
 # Stores the blocks specific to each user
 botBlocks.json
+
+#bot ids lol
+secrets/*
