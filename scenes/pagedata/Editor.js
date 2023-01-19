@@ -1,3 +1,4 @@
+
 let eventBlock={
   "type": "client_onevent",
   "message0": "client on event %1 : %2 %3 %4",
@@ -603,7 +604,7 @@ internalWebsocket.addEventListener("message",(event)=>{
 
   response=JSON.parse(response);
   if(response.event=="workspace"){
-    Blockly.serialization.workspaces.load(response.data, workspace);
+    Blockly.serialization.workspaces.load(JSON.parse(response.data), workspace);
   }
 });
 

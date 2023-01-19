@@ -141,7 +141,13 @@ eventNames.forEach((event=>{
     client.on(event, (eventData)=>{
         Object.values(codeEvents[event]).forEach(value => {
             codeVM.sandbox[value.eventVarName]=eventData;
-            codeVM.run(value.code);
+            try{
+                codeVM.run(value.code);
+            }catch(error){
+                console.log("BlockBotter error:");
+                console.log(error);
+                console.log(value.code._code);
+            }
         });
     });
 }));
@@ -241,7 +247,9 @@ exports.supplyFrontEnd=function(frontEnd){
 
 let mainEditor=null;
 const fs = require("fs");
-fs.open("./botBlocks.json","w",()=>{});
+if(!fs.existsSync("./botBlocks.json")){
+    fs.open("./botBlocks.json","w",()=>{});
+}
 exports.supplyEditor=function(editor){
     if(!client.user){
         editor.send("login");
@@ -273,7 +281,7 @@ exports.supplyEditor=function(editor){
                 codeVM.run(codeEvents.onStart[response.data.id].code);
                 break;
             case "saveJson":
-                fs.writeFileSync("./botBlocks.json", JSON.stringify(response.data,null,"    "));
+                fs.writeFileSync("./botBlocks.json", JSON.stringify(response.data,null,"  "));
                 break;
             case "delayedCodeUpdate":
                 editor._events.message(response.data);
@@ -285,11 +293,6 @@ exports.supplyEditor=function(editor){
                     event: "workspace",
                     data: fs.readFileSync("./botBlocks.json").toString()
                   }));
-                } else {
-                  editor.send(JSON.stringify({
-                    event: "workspace",
-                    data: "{}"
-                  }));
                 }
                 break;
         }
@@ -298,9 +301,3 @@ exports.supplyEditor=function(editor){
         mainEditor=null;
     });
 }
-
-//--
-
-
-
-//todo: https://github.com/patriksimek/vm2
