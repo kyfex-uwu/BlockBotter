@@ -250,8 +250,9 @@ const fs = require("fs");
 if(!fs.existsSync("./botBlocks.json")){
     fs.open("./botBlocks.json","w",()=>{});
 }
+const offline=true;
 exports.supplyEditor=function(editor){
-    if(!client.user){
+    if(!client.user&&!offline){
         editor.send("login");
         return;
     }
