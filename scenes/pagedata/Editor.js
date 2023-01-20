@@ -1,7 +1,7 @@
 
 let eventBlock={
   "type": "client_onevent",
-  "message0": "client on event %1 : %2 %3 %4",
+  "message0": "client on event %1 : event %2 %3 %4",
   "args0": [
     {
       "type": "field_dropdown",
