@@ -15,8 +15,7 @@ let eventBlock={
     },
     {
       "type": "field_variable",
-      "name": "EVENT_DATA",
-      "variable": "event"
+      "name": "EVENT_DATA"
     },
     {
       "type": "input_dummy"
@@ -251,18 +250,6 @@ Blockly.defineBlocksWithJsonArray([
   //mutators
 
 ]);
-
-Blockly.Blocks["client_onevent"].init=function(){
-  Blockly.Block.prototype.jsonInit.call(this,eventBlock);
-  //Blockly.JavaScript.nameDB_.setVariableMap(workspace.getVariableMap());
-
-  let suffix=2;
-  while(Blockly.getMainWorkspace().variableMap.getVariable("event"+suffix)) suffix++;
-  //Blockly.getMainWorkspace().variableMap.createVariable
-  this.setFieldValue(
-    Blockly.JavaScript.nameDB_.getName("event"+suffix, Blockly.VARIABLE_CATEGORY_NAME),
-    "EVENT_DATA");
-}
 
 //--
 
