@@ -617,6 +617,14 @@ function wsSend(data){
   }
 }
 
+document.getElementById("exportButton").addEventListener("click",()=>{
+  if(!confirm("Are you sure you want to export? This will overwrite whatever is in your \"exported\" folder.")) return;
+
+  internalWebsocket.send(JSON.stringify({
+    event:"export"
+  }));
+})
+
 let lastCode="";
 workspace.addChangeListener((event)=>{
   if(event.type==Blockly.Events.BLOCK_DELETE&&

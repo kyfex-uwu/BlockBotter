@@ -1,1 +1,2 @@
+cd ..
 sass scss/:resources/
