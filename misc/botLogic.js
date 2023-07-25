@@ -245,12 +245,33 @@ exports.supplyFrontEnd=function(frontEnd){
     })
 }
 
+//--
+
+let packageJson={
+  "author": "BlockBotter User",
+  "description": "descriptionhere",
+  "version": "1.0.0",
+
+  "main": "bot.js",
+  "dependencies": {
+    "discord.js": "^14.7.1"
+  }
+};
+// npm install discord.js@14.7.1
+
 let mainEditor=null;
 const fs = require("fs");
-if(!fs.existsSync("./botBlocks.json")){
-    fs.open("./botBlocks.json","w",()=>{});
+if(!fs.existsSync("./misc/botBlocks.json")){
+    fs.writeFileSync("./misc/botBlocks.json","");
 }
+<<<<<<< HEAD:botLogic.js
 const offline=false;
+=======
+const botTemplate = fs.readFileSync("./misc/botTemplate.js").toString();
+
+const offline=false;
+const childProcess = require("child_process");
+>>>>>>> exporter:misc/botLogic.js
 exports.supplyEditor=function(editor){
     if(!client.user&&!offline){
         editor.send("login");
@@ -282,17 +303,17 @@ exports.supplyEditor=function(editor){
                 codeVM.run(codeEvents.onStart[response.data.id].code);
                 break;
             case "saveJson":
-                fs.writeFileSync("./botBlocks.json", JSON.stringify(response.data,null,"  "));
+                fs.writeFileSync("./misc/botBlocks.json", JSON.stringify(response.data,null,"  "));
                 break;
             case "delayedCodeUpdate":
                 editor._events.message(response.data);
                 editor.send("next pls");
                 break;
             case "load":
-                if (fs.existsSync("./botBlocks.json")) {
+                if (fs.existsSync("./misc/botBlocks.json")) {
                   editor.send(JSON.stringify({
                     event: "workspace",
-                    data: fs.readFileSync("./botBlocks.json").toString()
+                    data: fs.readFileSync("./misc/botBlocks.json").toString()
                   }));
                 }
                 break;
@@ -301,4 +322,45 @@ exports.supplyEditor=function(editor){
     editor.on("close",(event)=>{
         mainEditor=null;
     });
+}
+
+function exportToBot(){
+    fs.writeFileSync("./exported/package.json",JSON.stringify(Object.assign({
+        author: client.user.username,
+        //todo lol
+    },packageJson),null,2));
+
+    let code=botTemplate.replace("TOKEN TAG",client.token);
+
+    let initCode="";
+    let eventCode="";
+    Object.entries(codeEvents).forEach((category)=>{
+        let name=category[0];
+        let eventCategory=category[1];
+
+        if(Object.keys(eventCategory).length==0) return;
+
+        if(name=="onStart"){
+            Object.values(eventCategory).forEach((event)=>{
+                initCode+=event.code._code+"\n";
+            });
+        }else{
+            Object.values(eventCategory).forEach((event)=>{
+                eventCode+=`client.on('${name}',(${event.eventVarName})=>{\n`+
+                "   "+event.code._code+"\n"+
+                `});\n`;
+                console.log("added")
+            });
+                console.log("done")
+        }
+    });
+    code=code
+        .replace("\"INIT TAG\"",initCode)
+        .replace("\"EVENTS TAG\"",eventCode);
+
+    fs.writeFileSync("./exported/bot.js",code);
+
+    if(!fs.existsSync("./exported/node_modules")){
+        childProcess.exec('cmd /c start /min misc\\exportInit.bat');
+    }
 }

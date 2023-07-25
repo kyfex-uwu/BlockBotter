@@ -1,9 +1,13 @@
-const botLogic = require("./botLogic");
+const botLogic = require("./misc/botLogic");
 
 //--
 
 const fs = require("fs");
 const crypto = require("crypto");
+
+if (!fs.existsSync("./secrets")){
+    fs.mkdirSync("./secrets");
+}
 
 //gets cipher key
 let cipherKey=undefined;
@@ -102,7 +106,7 @@ const app = express();
 
 app.use(express.static('resources'));
 
-const utils = require('./utils');
+const utils = require('./misc/utils');
 const AbstractScene = require('./scenes/AbstractScene').scene;
 new AbstractScene(
   "/",
@@ -122,6 +126,12 @@ new AbstractScene(
   "Editor",
   utils.getTextFile("./scenes/pagedata/Editor.html"),
   utils.getTextFile("./scenes/pagedata/Editor.js")
+).register(app);
+new AbstractScene(
+  "/export",
+  "Export",
+  utils.getTextFile("./scenes/pagedata/Export.html"),
+  utils.getTextFile("./scenes/pagedata/Export.js")
 ).register(app);
 
 app.get("/login",(req,res)=>{
@@ -148,7 +158,7 @@ app.listen(3000);
 
 //--
 
-console.log("\n"+utils.getTextFile("./welcomeLog.txt"));
+console.log("\n"+utils.getTextFile("./misc/welcomeLog.txt"));
 
 const readline = require("readline");
 const rl = readline.createInterface({
@@ -172,7 +182,7 @@ async function commandLineHandler(...input) {
         "open (front OR editor): opens the client or the editor, depending on which one you specify";
     case "r":
     case "restart":
-      await require('child_process').exec('cmd /c start "" cmd /c start.bat');
+      await require('child_process').exec('cmd /c start cmd /c start.bat');
       setTimeout(function() {
         process.exit()
       }, 100);
@@ -183,7 +193,7 @@ async function commandLineHandler(...input) {
       }, 1000);
       return "shutting down...";
     case "sass":
-      await require('child_process').exec('cmd /c start "" cmd /c compile_sass.bat');
+      await require('child_process').exec('cmd /c start cmd /c compile_sass.bat');
       return "recompiled";
     case "open":
       switch(input[1]){

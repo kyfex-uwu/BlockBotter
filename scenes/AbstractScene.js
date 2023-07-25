@@ -1,4 +1,4 @@
-const utils = require('../utils');
+const utils = require('../misc/utils');
 const ContainerHTML = utils.getTextFile("./scenes/Container.html");
 
 exports.scene = class AbstractScene{

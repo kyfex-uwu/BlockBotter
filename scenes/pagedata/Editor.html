@@ -11,25 +11,36 @@
 	position: absolute;
 	color: black;
 	">
-		<a href="/client" id="clientButton">Client</a>
+		<span style="
+			position: absolute;
+			top: var(--padding);
+			right: var(--padding);
+			z-index: 9999;
+			width: 0;">
+			<a href="/client" class="side-button" style="
+				background-color: #198754;">Client</a>
+			<a href="/export" class="side-button" style="
+				background-color: #cf1794;">Export</a>
+		</span>
 	</div>
 
 <style>
-	#clientButton{
-	    font-size: 1.5em;
-	    background-color: var(--bs-green);
+	.side-button{
+		font-size: 1.5em;
 	    color: white;
 	    padding: 0 var(--padding);
+	    margin: 0 0 var(--padding) 0;
 	    border-radius: var(--border-radius);
 	    text-decoration: none;
-	    position: absolute;
-		z-index: 9999;
-		top: var(--padding);
-		right: var(--padding);
-	  }
-	  #clientButton:hover{
-	    opacity: 0.8;
-	  }
+	    float: right;
+	    opacity: 1;
+
+	    transition: opacity, 0.2s;
+	}
+	.side-button:hover{
+		opacity: 0.8;
+		color: white;
+	}
 </style>
 
 <!-- https://stackoverflow.com/questions/59416963/what-are-the-default-blockly-blocks -->

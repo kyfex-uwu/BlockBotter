@@ -602,8 +602,10 @@ internalWebsocket.addEventListener("message",(event)=>{
   }
 
   response=JSON.parse(response);
-  if(response.event=="workspace"){
-    Blockly.serialization.workspaces.load(JSON.parse(response.data), workspace);
+  switch(response.event){
+    case "workspace":
+      Blockly.serialization.workspaces.load(JSON.parse(response.data), workspace);
+      break;
   }
 });
 
