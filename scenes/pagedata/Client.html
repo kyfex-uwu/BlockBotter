@@ -11,13 +11,16 @@
     width: 10em;
     list-style: none;
     padding: unset;"></ul>
-  <ul id="messageContainer" style="
-    list-style: none;
-    padding: unset;
+  <span style="
     overflow-y: scroll;
     height: 100%;
     flex-direction: column;
-    display: flex;"></ul>
+    display: flex;">
+    <ul id="messageContainer" style="
+      list-style: none;
+      padding: unset;"></ul>
+    <textarea id="messageSender"></textarea>
+  </span>
   <div><a href="/editor" id="editorButton">Editor</a></div>
 </div>
 

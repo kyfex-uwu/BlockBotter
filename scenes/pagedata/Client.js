@@ -158,6 +158,8 @@ function addMessage(messageData, position){
 			});
 			//todo: add attachments, embeds, and action rows
 	bigCodeBlocks=[];
+
+	messageContainer.parentElement.scrollTop=messageContainer.parentElement.scrollTopMax
 }
 
 let bigCodeBlocks=[];
@@ -190,3 +192,18 @@ function cleanMessage(str){
 	    return `<span class="emoji"><img src="https://cdn.discordapp.com/emojis/${capture1}"></span>`;
 	})
 }
+
+//--
+
+const messageSender=document.getElementById("messageSender");
+messageSender.addEventListener("keydown",(event)=>{
+	if(event.key=="Enter"&&!event.shiftKey){
+		sendAndWait("sendMessage",{
+			channel:currentChannel,
+			message:messageSender.value
+		}).then((data)=>{
+			if(data.sent) messageSender.value="";
+		});
+		event.preventDefault();
+	}
+});

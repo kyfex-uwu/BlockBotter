@@ -166,13 +166,13 @@ exports.supplyFrontEnd=function(frontEnd){
         }));
     });
     frontEnd.on("message",(event)=>{
-        let response=JSON.parse(event);
+        let request=JSON.parse(event);
 
-        if(response.requestResponse){
+        if(request.requestResponse){
             let toReturn=[];
-            switch(response.event){
+            switch(request.event){
                 case "getGuildChannelsVisual":
-                    client.guilds.cache.get(response.data).channels.cache.forEach((channel,key)=>{
+                    client.guilds.cache.get(request.data).channels.cache.forEach((channel,key)=>{
                         toReturn.push({
                             name: channel.name,
                             id: channel.id,
@@ -187,24 +187,24 @@ exports.supplyFrontEnd=function(frontEnd){
 
                     frontEnd.send(JSON.stringify({
                         responseToRequest: true,
-                        sendId: response.sendId,
+                        sendId: request.sendId,
                         data: toReturn
                     }));
                     break;
                 case "getChannelMessagesVisual":
-                    let channel = client.channels.cache.get(response.data.channel);
+                    let channel = client.channels.cache.get(request.data.channel);
                     if(!channel.isTextBased()){
                         frontEnd.send(JSON.stringify({
                             responseToRequest: true,
-                            sendId: response.sendId,
+                            sendId: request.sendId,
                             data: {error:"not a text channel"}
                         }));
                         return;
                     }
 
                     channel.messages.fetch({
-                        before: response.data.before,
-                        after: response.data.after
+                        before: request.data.before,
+                        after: request.data.after
                     }).then((messages)=>{
                             messages.forEach((message)=>{
                                 toReturn.push({
@@ -219,21 +219,32 @@ exports.supplyFrontEnd=function(frontEnd){
 
                             frontEnd.send(JSON.stringify({
                                 responseToRequest: true,
-                                sendId: response.sendId,
+                                sendId: request.sendId,
                                 data: toReturn
                             }));
                         });
                     break;
                 case "askForUser":
-                    client.users.fetch(response.data).then((user)=>{
+                    client.users.fetch(request.data).then((user)=>{
                         frontEnd.send(JSON.stringify({
                             responseToRequest: true,
-                            sendId: response.sendId,
+                            sendId: request.sendId,
                             data: {
                                 name: user.username,
                             }
                         }));
                     });
+                    break;
+                case "sendMessage":
+                    client.channels.fetch(request.data.channel)
+                        .then(channel=>channel.send(request.data.message))
+                        .then(message=>{
+                            frontEnd.send(JSON.stringify({
+                                responseToRequest: true,
+                                sendId: request.sendId,
+                                data: { sent:true }
+                            }));
+                        });
                     break;
             }
         }else{
