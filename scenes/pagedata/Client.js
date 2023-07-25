@@ -195,7 +195,25 @@ function cleanMessage(str){
 
 //--
 
+const TOSListeners=[];
+let internalWannaBreakTOS=false;
+Object.defineProperty(window,"wannaBreakTOS",{
+  set:function(val){
+  	val=!!val;
+
+    internalWannaBreakTOS=val;
+    console.log(val?
+    	"naughty naughty... don't blame me if you get banned, use this wisely":
+    	"back to safety :3");
+		for(const listener of TOSListeners)
+			listener(val);
+  },
+  get:()=>internalWannaBreakTOS
+});
+
 const messageSender=document.getElementById("messageSender");
+TOSListeners.push(val=>messageSender.hidden=!val);
+
 messageSender.addEventListener("keydown",(event)=>{
 	if(event.key=="Enter"&&!event.shiftKey){
 		sendAndWait("sendMessage",{
