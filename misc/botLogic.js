@@ -264,14 +264,10 @@ const fs = require("fs");
 if(!fs.existsSync("./misc/botBlocks.json")){
     fs.writeFileSync("./misc/botBlocks.json","");
 }
-<<<<<<< HEAD:botLogic.js
-const offline=false;
-=======
 const botTemplate = fs.readFileSync("./misc/botTemplate.js").toString();
 
 const offline=false;
 const childProcess = require("child_process");
->>>>>>> exporter:misc/botLogic.js
 exports.supplyEditor=function(editor){
     if(!client.user&&!offline){
         editor.send("login");
