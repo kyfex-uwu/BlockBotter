@@ -602,8 +602,10 @@ internalWebsocket.addEventListener("message",(event)=>{
   }
 
   response=JSON.parse(response);
-  if(response.event=="workspace"){
-    Blockly.serialization.workspaces.load(JSON.parse(response.data), workspace);
+  switch(response.event){
+    case "workspace":
+      Blockly.serialization.workspaces.load(JSON.parse(response.data), workspace);
+      break;
   }
 });
 
@@ -616,14 +618,6 @@ function wsSend(data){
     internalWebsocket.send(data);
   }
 }
-
-document.getElementById("exportButton").addEventListener("click",()=>{
-  if(!confirm("Are you sure you want to export? This will overwrite whatever is in your \"exported\" folder.")) return;
-
-  internalWebsocket.send(JSON.stringify({
-    event:"export"
-  }));
-})
 
 let lastCode="";
 workspace.addChangeListener((event)=>{

@@ -248,9 +248,10 @@ exports.supplyFrontEnd=function(frontEnd){
 //--
 
 let packageJson={
-  "name": "packagenamehere",
-  "version": "1.2.3",
+  "author": "BlockBotter User",
   "description": "descriptionhere",
+  "version": "1.0.0",
+
   "main": "bot.js",
   "dependencies": {
     "discord.js": "^14.7.1"
@@ -312,49 +313,50 @@ exports.supplyEditor=function(editor){
                   }));
                 }
                 break;
-            case "export":
-                fs.writeFileSync("./exported/package.json",JSON.stringify(Object.assign({
-                    author: client.user.username,
-                    //todo lol
-                },packageJson),null,2));
-
-                let code=botTemplate.replace("TOKEN TAG",client.token);
-
-                let initCode="";
-                let eventCode="";
-                Object.entries(codeEvents).forEach((category)=>{
-                    let name=category[0];
-                    let eventCategory=category[1];
-
-                    if(Object.keys(eventCategory).length==0) return;
-
-                    if(name=="onStart"){
-                        Object.values(eventCategory).forEach((event)=>{
-                            initCode+=event.code._code+"\n";
-                        });
-                    }else{
-                        Object.values(eventCategory).forEach((event)=>{
-                            eventCode+=`client.on('${name}',(${event.eventVarName})=>{\n`+
-                            "   "+event.code._code+"\n"+
-                            `});\n`;
-                            console.log("added")
-                        });
-                            console.log("done")
-                    }
-                });
-                code=code
-                    .replace("\"INIT TAG\"",initCode)
-                    .replace("\"EVENTS TAG\"",eventCode);
-
-                fs.writeFileSync("./exported/bot.js",code);
-
-                if(!fs.existsSync("./exported/node_modules")){
-                    childProcess.exec('cmd /c start /min misc\\exportInit.bat');
-                }
-                break;
         }
     });
     editor.on("close",(event)=>{
         mainEditor=null;
     });
+}
+
+function exportToBot(){
+    fs.writeFileSync("./exported/package.json",JSON.stringify(Object.assign({
+        author: client.user.username,
+        //todo lol
+    },packageJson),null,2));
+
+    let code=botTemplate.replace("TOKEN TAG",client.token);
+
+    let initCode="";
+    let eventCode="";
+    Object.entries(codeEvents).forEach((category)=>{
+        let name=category[0];
+        let eventCategory=category[1];
+
+        if(Object.keys(eventCategory).length==0) return;
+
+        if(name=="onStart"){
+            Object.values(eventCategory).forEach((event)=>{
+                initCode+=event.code._code+"\n";
+            });
+        }else{
+            Object.values(eventCategory).forEach((event)=>{
+                eventCode+=`client.on('${name}',(${event.eventVarName})=>{\n`+
+                "   "+event.code._code+"\n"+
+                `});\n`;
+                console.log("added")
+            });
+                console.log("done")
+        }
+    });
+    code=code
+        .replace("\"INIT TAG\"",initCode)
+        .replace("\"EVENTS TAG\"",eventCode);
+
+    fs.writeFileSync("./exported/bot.js",code);
+
+    if(!fs.existsSync("./exported/node_modules")){
+        childProcess.exec('cmd /c start /min misc\\exportInit.bat');
+    }
 }

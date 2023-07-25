@@ -127,6 +127,12 @@ new AbstractScene(
   utils.getTextFile("./scenes/pagedata/Editor.html"),
   utils.getTextFile("./scenes/pagedata/Editor.js")
 ).register(app);
+new AbstractScene(
+  "/export",
+  "Export",
+  utils.getTextFile("./scenes/pagedata/Export.html"),
+  utils.getTextFile("./scenes/pagedata/Export.js")
+).register(app);
 
 app.get("/login",(req,res)=>{
   if(req.query.id!==undefined){
